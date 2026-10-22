@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<style>body{background:#111;color:#eee;font:14px/1.7 monospace;padding:16px;}</style>
+</head>
+<body>
+<div id="out">正在检测...</div>
+<script>
+var lines = [];
+lines.push('浏览器: ' + navigator.userAgent);
+lines.push('视口: ' + window.innerWidth + 'x' + window.innerHeight);
+try {
+  var cx = document.createElement('canvas').getContext('2d');
+  lines.push('Canvas 2D: ' + (cx ? 'OK' : 'FAIL'));
+} catch(e) { lines.push('Canvas 2D: ERROR ' + e.message); }
+lines.push('matchMedia: ' + (window.matchMedia ? 'OK' : 'NO'));
+lines.push('PointerEvent: ' + ('PointerEvent' in window ? 'OK' : 'NO'));
+lines.push('requestAnimationFrame: ' + (window.requestAnimationFrame ? 'OK' : 'NO'));
+var es6 = '支持';
+try { eval('var _a=(x)=>x; var _b=`hi`;'); }
+catch(e) { es6 = '不支持 — ' + e.message; }
+lines.push('ES6 语法: ' + es6);
+document.getElementById('out').innerHTML = lines.join('<br>');
+</script>
+</body>
+</html>
