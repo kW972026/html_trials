@@ -1,0 +1,1024 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+<title>MOON JOURNEY</title>
+<style>
+  * { margin:0; padding:0; box-sizing:border-box; }
+  
+  /* 使用 100dvh 解决移动端地址栏收缩导致的跳动 */
+  html, body {
+    width:100%; 
+    height:100vh;
+    height:100dvh; 
+    overflow:hidden; 
+    background:#000;
+    font-family: -apple-system, BlinkMacSystemFont, "PingFang SC", "Helvetica Neue", "Microsoft YaHei", sans-serif;
+    touch-action:none; 
+    overscroll-behavior:none;
+    -webkit-tap-highlight-color: transparent;
+  }
+  
+  #c { position:fixed; inset:0; display:block; width:100%; height:100%; }
+
+  /* 暗角 */
+  #vignette {
+    position:fixed; inset:0; pointer-events:none; z-index:6;
+    background: radial-gradient(ellipse 75% 65% at 50% 45%,
+      rgba(0,0,0,0) 0%,
+      rgba(0,0,0,0.18) 55%,
+      rgba(0,0,0,0.55) 82%,
+      rgba(0,0,0,0.88) 100%);
+  }
+
+  /* 胶片颗粒 */
+  #grain {
+    position:fixed; inset:-50%; pointer-events:none; z-index:12;
+    opacity:0.07;
+    background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='220' height='220'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.82' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='220' height='220' filter='url(%23n)'/%3E%3C/svg%3E");
+    background-size:220px 220px;
+    animation: grainShift 7s steps(6) infinite;
+  }
+  @keyframes grainShift {
+    0%   { transform:translate(0,0); }
+    20%  { transform:translate(-3%,2%); }
+    40%  { transform:translate(2%,-3%); }
+    60%  { transform:translate(-2%,-2%); }
+    80%  { transform:translate(3%,1%); }
+    100% { transform:translate(0,0); }
+  }
+
+  /* HUD（加入安全区适配） */
+  #hud {
+    position:fixed; z-index:10; pointer-events:none;
+    top: calc(clamp(22px, 5vh, 52px) + env(safe-area-inset-top));
+    left: calc(clamp(20px, 6vw, 60px) + env(safe-area-inset-left));
+    color:#fff;
+  }
+  #hud .name {
+    font-size: clamp(17px, 3.6vw, 26px);
+    font-weight:300;
+    letter-spacing:0.34em;
+    text-shadow: 0 0 24px rgba(255,255,255,.45), 0 2px 12px rgba(0,0,0,.6);
+    transition: opacity .4s;
+  }
+  #hud .date {
+    margin-top:10px;
+    font-size: clamp(9px, 2vw, 11px);
+    letter-spacing:0.46em;
+    opacity:.45;
+    text-shadow: 0 2px 10px rgba(0,0,0,.8);
+  }
+  #hud .bar {
+    margin-top:12px; width:34px; height:1px;
+    background:linear-gradient(90deg, rgba(255,255,255,.65), rgba(255,255,255,0));
+  }
+
+  /* 导航点（加入安全区适配） */
+  #dots {
+    position:fixed; z-index:11;
+    bottom: calc(clamp(24px, 5vh, 52px) + env(safe-area-inset-bottom));
+    left:50%; transform:translateX(-50%);
+    display:flex; gap:16px;
+    opacity:0; pointer-events:none;
+    transition: opacity .9s cubic-bezier(.4,0,.2,1);
+  }
+  #dots.show { opacity:1; pointer-events:auto; }
+  #dots i {
+    display:block; width:8px; height:8px; border-radius:50%;
+    background:rgba(255,255,255,.26);
+    cursor:pointer;
+    transition: all .45s cubic-bezier(.4,0,.2,1);
+    box-shadow: 0 0 0 rgba(255,255,255,0);
+  }
+  #dots i.active {
+    background:rgba(255,255,255,.96);
+    transform:scale(1.3);
+    box-shadow: 0 0 16px rgba(255,255,255,.85);
+  }
+
+  /* 黑幕 */
+  #curtain {
+    position:fixed; inset:0; z-index:20;
+    background:#000;
+    opacity:1;
+    pointer-events:none;
+    transition: opacity .42s ease;
+  }
+
+  /* 互动触发点 */
+  #hotspot {
+    position:fixed; z-index:15;
+    width: 0; height: 0;
+    border-left: 9px solid transparent;
+    border-right: 9px solid transparent;
+    border-top: 14px solid rgba(255, 248, 220, 0.85);
+    filter: drop-shadow(0 0 10px rgba(255, 248, 220, 0.7));
+    cursor: pointer;
+    opacity: 0; pointer-events: none;
+    transition: opacity 0.8s ease, transform 0.8s ease;
+    transform: translate(-50%, -50%);
+    animation: pulse 2.5s infinite alternate ease-in-out;
+  }
+  #hotspot.show { opacity: 1; pointer-events: auto; }
+  @keyframes pulse {
+    0% { transform: translate(-50%, -50%) scale(0.95); filter: drop-shadow(0 0 6px rgba(255, 248, 220, 0.4)); }
+    100% { transform: translate(-50%, -50%) scale(1.1); filter: drop-shadow(0 0 16px rgba(255, 248, 220, 0.9)); }
+  }
+
+  /* 弹窗（自适应小屏宽度） */
+  #modal {
+    position:fixed; inset:0; z-index:30;
+    background: rgba(5, 5, 10, 0.6); backdrop-filter: blur(6px);
+    -webkit-backdrop-filter: blur(6px);
+    display:flex; align-items:center; justify-content:center;
+    opacity:0; pointer-events:none; transition: opacity 0.4s ease;
+  }
+  #modal.show { opacity:1; pointer-events:auto; }
+  
+  .modal-content {
+    background: rgba(20, 22, 30, 0.85); 
+    border: 1px solid rgba(255, 248, 220, 0.15);
+    padding: 50px 24px;
+    border-radius: 16px; 
+    text-align: center;
+    position:relative; 
+    max-width: 85vw; /* 相对视口宽度 */
+    width: 320px; 
+    box-shadow: 0 20px 50px rgba(0,0,0,0.9), inset 0 1px 0 rgba(255,255,255,0.05);
+    transform: translateY(15px) scale(0.98); 
+    transition: transform 0.4s cubic-bezier(0.2, 0.8, 0.2, 1);
+  }
+  #modal.show .modal-content { transform: translateY(0) scale(1); }
+  
+  .modal-content p {
+    color: #fff8dc; 
+    font-size: clamp(15px, 4vw, 16px); /* 极小屏幕自适应 */
+    line-height: 2.2; 
+    letter-spacing: 0.2em; 
+    margin: 0;
+    font-weight: 300;
+    text-wrap: balance; 
+    padding: 0 10px;
+  }
+  
+  #closeModal {
+    position: absolute; top: 15px; right: 20px;
+    color: rgba(255,255,255,0.3); 
+    font-size: 26px; line-height: 1;
+    cursor: pointer; transition: color 0.3s;
+    font-weight: 100;
+  }
+  #closeModal:hover { color: #fff; }
+</style>
+</head>
+<body>
+
+<canvas id="c"></canvas>
+<div id="vignette"></div>
+
+<div id="hud">
+  <div class="name" id="hudName">新月 · 朔</div>
+  <div class="date" id="hudDate">农历 初一</div>
+  <div class="bar"></div>
+</div>
+
+<div id="hotspot"></div>
+
+<div id="modal">
+  <div class="modal-content">
+    <span id="closeModal">&times;</span>
+    <p id="modalText"></p>
+  </div>
+</div>
+
+<div id="dots"></div>
+<div id="grain"></div>
+<div id="curtain"></div>
+
+<script>
+(function () {
+  'use strict';
+
+  /* =========================================================
+     基础
+  ========================================================= */
+  const canvas = document.getElementById('c');
+  const ctx = canvas.getContext('2d', { alpha: false });
+  const curtain = document.getElementById('curtain');
+  const hudName = document.getElementById('hudName');
+  const hudDate = document.getElementById('hudDate');
+  const dotsEl = document.getElementById('dots');
+  const hotspot = document.getElementById('hotspot');
+  const modal = document.getElementById('modal');
+  const modalText = document.getElementById('modalText');
+
+  const TAU = Math.PI * 2;
+  const lerp = (a, b, t) => a + (b - a) * t;
+
+  let W = 0, H = 0, DPR = 1;
+
+  const state = {
+    cur: 0,
+    tx: 0, ty: 0,
+    px: 0, py: 0,
+    busy: false,
+    hasReachedEnd: false,
+    isModalOpen: false
+  };
+
+  /* =========================================================
+     月相绘制
+  ========================================================= */
+  function moonPath(c, R, p) {
+    const a = Math.max(0.001, Math.abs(Math.cos(Math.PI * p)) * R);
+    c.beginPath();
+    c.arc(0, 0, R, -Math.PI / 2, Math.PI / 2, false);
+    if (p < 0.5) {
+      c.ellipse(0, 0, a, R, 0, Math.PI / 2, -Math.PI / 2, true);
+    } else {
+      c.ellipse(0, 0, a, R, 0, Math.PI / 2, Math.PI * 1.5, false);
+    }
+    c.closePath();
+  }
+
+  function drawMoonShape(cx, cy, R, phase, color, rot, glow, glowBlur) {
+    ctx.save();
+    ctx.translate(cx, cy);
+    if (rot) ctx.rotate(rot);
+    if (glow) {
+      ctx.shadowColor = glow;
+      ctx.shadowBlur = glowBlur || R * 1.1;
+    }
+    moonPath(ctx, R, phase);
+    ctx.fillStyle = color;
+    ctx.fill();
+    ctx.restore();
+  }
+
+  /* =========================================================
+     场景 0 · 新月 · 深夜草原银河
+  ========================================================= */
+  const scene0 = {
+    name: '新月 · 朔',
+    date: '农历 初一',
+    hotspot: { x: 0.5, y: 0.82, text: '我们总在寻找月光\n却忘了自己就在星辰里' },
+    init() {
+      const d = this.d = {};
+      d.stars = [];
+      for (let i = 0; i < 260; i++) {
+        d.stars.push({
+          x: Math.random(), y: Math.random() * 0.8,
+          r: 0.3 + Math.random() * 1.4, a: 0.2 + Math.random() * 0.7,
+          ph: Math.random() * TAU, sp: 0.6 + Math.random() * 2.2, dep: 0.4 + Math.random() * 1.3
+        });
+      }
+      d.milky = [];
+      for (let i = 0; i < 520; i++) {
+        const u = Math.random();
+        const v = (Math.random() + Math.random() + Math.random() - 1.5) / 1.5;
+        d.milky.push({ u, v, r: 0.2 + Math.random() * 1.1, a: 0.12 + Math.random() * 0.55 });
+      }
+      d.grass = [];
+      for (let i = 0; i < 150; i++) {
+        d.grass.push({
+          x: Math.random(), y: 0.755 + Math.random() * 0.29,
+          h: 0.014 + Math.random() * 0.048, lean: (Math.random() - 0.5) * 0.9,
+          w: 0.6 + Math.random() * 1.3, ph: Math.random() * TAU
+        });
+      }
+    },
+    draw(t) {
+      const d = this.d;
+      const PX = state.px * 16, PY = state.py * 12;
+
+      let g = ctx.createLinearGradient(0, 0, 0, H * 0.82);
+      g.addColorStop(0, '#000003'); g.addColorStop(0.45, '#03050f'); g.addColorStop(1, '#080e1c');
+      ctx.fillStyle = g; ctx.fillRect(0, 0, W, H);
+      ctx.save();
+      ctx.translate(W * 0.5 + PX * 0.4, H * 0.42 + PY * 0.4); ctx.rotate(-0.55);
+      const bW = Math.max(W, H) * 1.7, bH = Math.min(W, H) * 0.78;
+      const mg = ctx.createLinearGradient(0, -bH * 0.5, 0, bH * 0.5);
+      mg.addColorStop(0, 'rgba(70,80,150,0)'); mg.addColorStop(0.3, 'rgba(100,110,190,0.07)');
+      mg.addColorStop(0.5, 'rgba(175,180,240,0.16)'); mg.addColorStop(0.7, 'rgba(100,110,190,0.07)'); mg.addColorStop(1, 'rgba(70,80,150,0)');
+      ctx.fillStyle = mg; ctx.fillRect(-bW * 0.5, -bH * 0.5, bW, bH);
+      ctx.fillStyle = '#eef2ff';
+      for (let i = 0; i < d.milky.length; i++) {
+        const s = d.milky[i]; ctx.globalAlpha = s.a;
+        ctx.beginPath(); ctx.arc((s.u - 0.5) * bW, s.v * bH, s.r, 0, TAU); ctx.fill();
+      }
+      ctx.globalAlpha = 1; ctx.restore();
+      for (let i = 0; i < d.stars.length; i++) {
+        const s = d.stars[i], a = s.a * (0.55 + 0.45 * Math.sin(t * s.sp + s.ph));
+        if (a <= 0.012) continue;
+        ctx.globalAlpha = a; ctx.fillStyle = '#ffffff';
+        ctx.beginPath(); ctx.arc(s.x * W + PX * s.dep, s.y * H + PY * s.dep, s.r, 0, TAU); ctx.fill();
+      }
+      ctx.globalAlpha = 1;
+      const gy = x => H * 0.755 + Math.sin(x / W * 5.2 + 1.2) * H * 0.014 + Math.sin(x / W * 12.5) * H * 0.006;
+      ctx.beginPath(); ctx.moveTo(0, H); ctx.lineTo(0, gy(0));
+      for (let x = 0; x <= W; x += 8) ctx.lineTo(x, gy(x));
+      ctx.lineTo(W, H); ctx.closePath();
+      const gg = ctx.createLinearGradient(0, H * 0.72, 0, H);
+      gg.addColorStop(0, '#060a14'); gg.addColorStop(1, '#000104');
+      ctx.fillStyle = gg; ctx.fill();
+      ctx.lineCap = 'round'; ctx.strokeStyle = '#0b1424';
+      for (let i = 0; i < d.grass.length; i++) {
+        const b = d.grass[i], bx = b.x * W, by = H * b.y;
+        if (by < H * 0.73) continue;
+        const sway = Math.sin(t * 1.15 + b.ph) * W * 0.005;
+        ctx.beginPath(); ctx.moveTo(bx, by);
+        ctx.quadraticCurveTo(bx + b.lean * W * 0.006 + sway * 0.5, by - b.h * H * 0.6, bx + b.lean * W * 0.014 + sway, by - b.h * H);
+        ctx.lineWidth = b.w; ctx.stroke();
+      }
+    }
+  };
+
+  /* =========================================================
+     场景 1 · 蛾眉月 · 傍晚金星伴月
+  ========================================================= */
+  const scene1 = {
+    name: '蛾眉月',
+    date: '农历 初三',
+    hotspot: { x: 0.5, y: 0.82, text: '黄昏是白昼的尾声\n也是星月交错的序章' },
+    init() {
+      const d = this.d = {};
+      d.stars = [];
+      for (let i = 0; i < 55; i++) {
+        d.stars.push({
+          x: Math.random(), y: Math.random() * 0.34,
+          r: 0.3 + Math.random() * 0.9, a: 0.08 + Math.random() * 0.45,
+          ph: Math.random() * TAU, sp: 0.8 + Math.random() * 1.8
+        });
+      }
+      d.clouds = [];
+      for (let i = 0; i < 8; i++) {
+        d.clouds.push({
+          x: Math.random(), y: 0.26 + Math.random() * 0.34,
+          w: 0.14 + Math.random() * 0.26, h: 0.008 + Math.random() * 0.013,
+          a: 0.06 + Math.random() * 0.12, sp: 0.0025 + Math.random() * 0.005, tint: Math.random()
+        });
+      }
+      d.grass = [];
+      for (let i = 0; i < 120; i++) {
+        d.grass.push({
+          x: Math.random(), y: 0.78 + Math.random() * 0.3,
+          h: 0.012 + Math.random() * 0.038, lean: (Math.random() - 0.5) * 0.8,
+          w: 0.5 + Math.random() * 1.1, ph: Math.random() * TAU
+        });
+      }
+    },
+    draw(t) {
+      const d = this.d;
+      const PX = state.px * 15, PY = state.py * 11;
+      const g = ctx.createLinearGradient(0, 0, 0, H * 0.9);
+      g.addColorStop(0, '#150e30'); g.addColorStop(0.17, '#2c1a4c'); g.addColorStop(0.35, '#5f3468');
+      g.addColorStop(0.51, '#a34e6f'); g.addColorStop(0.65, '#dd7668'); g.addColorStop(0.77, '#f4a463');
+      g.addColorStop(0.89, '#ffc98a'); g.addColorStop(1, '#ffdcaa');
+      ctx.fillStyle = g; ctx.fillRect(0, 0, W, H);
+      for (let i = 0; i < d.stars.length; i++) {
+        const s = d.stars[i], a = s.a * (0.5 + 0.5 * Math.sin(t * s.sp + s.ph));
+        ctx.globalAlpha = a * 0.8; ctx.fillStyle = '#fff';
+        ctx.beginPath(); ctx.arc(s.x * W + PX * 0.6, s.y * H + PY * 0.6, s.r, 0, TAU); ctx.fill();
+      }
+      ctx.globalAlpha = 1;
+      for (let i = 0; i < d.clouds.length; i++) {
+        const c = d.clouds[i], x = ((c.x + t * c.sp) % 1.4) - 0.2;
+        const cx = x * W + PX * 0.7, cy = c.y * H + PY * 0.7;
+        const rw = c.w * W, rh = c.h * H;
+        const cg = ctx.createLinearGradient(cx, cy - rh, cx, cy + rh);
+        cg.addColorStop(0, 'rgba(60,30,70,' + (c.a * 0.7) + ')'); cg.addColorStop(0.5, 'rgba(90,40,80,' + c.a + ')'); cg.addColorStop(1, 'rgba(255,170,140,0)');
+        ctx.save(); ctx.translate(cx, cy); ctx.scale(1, rh / rw); ctx.translate(-cx, -cy);
+        ctx.fillStyle = cg; ctx.beginPath(); ctx.arc(cx, cy, rw, 0, TAU); ctx.fill(); ctx.restore();
+      }
+      const vx = W * 0.275 + PX * 1.1, vy = H * 0.255 + PY * 1.1, vr = Math.max(2.0, Math.min(W, H) * 0.0075);
+      const vg = ctx.createRadialGradient(vx, vy, 0, vx, vy, vr * 16);
+      vg.addColorStop(0, 'rgba(255,250,225,0.55)'); vg.addColorStop(0.15, 'rgba(255,240,195,0.20)'); vg.addColorStop(1, 'rgba(255,225,170,0)');
+      ctx.fillStyle = vg; ctx.beginPath(); ctx.arc(vx, vy, vr * 16, 0, TAU); ctx.fill();
+      ctx.fillStyle = '#fffaf0'; ctx.beginPath(); ctx.arc(vx, vy, vr, 0, TAU); ctx.fill();
+      const mx = W * 0.635 + PX * 0.8, my = H * 0.525 + PY * 0.8, R = Math.min(W * 0.062, H * 0.052);
+      drawMoonShape(mx, my, R, 0.15, '#fff6dd', 0.62, 'rgba(255,232,180,0.95)', R * 1.5);
+      ctx.beginPath(); ctx.moveTo(0, H); ctx.lineTo(0, H * 0.775);
+      ctx.bezierCurveTo(W * 0.14, H * 0.725, W * 0.28, H * 0.79, W * 0.43, H * 0.755);
+      ctx.bezierCurveTo(W * 0.58, H * 0.72, W * 0.72, H * 0.80, W * 0.86, H * 0.762);
+      ctx.bezierCurveTo(W * 0.94, H * 0.742, W * 0.98, H * 0.772, W, H * 0.755);
+      ctx.lineTo(W, H); ctx.closePath();
+      const dg = ctx.createLinearGradient(0, H * 0.72, 0, H);
+      dg.addColorStop(0, '#2b1731'); dg.addColorStop(1, '#0b0511');
+      ctx.fillStyle = dg; ctx.fill();
+      ctx.lineCap = 'round'; ctx.strokeStyle = '#180c1c';
+      for (let i = 0; i < d.grass.length; i++) {
+        const b = d.grass[i], bx = b.x * W, by = H * b.y;
+        const sway = Math.sin(t * 1.05 + b.ph) * W * 0.005;
+        ctx.beginPath(); ctx.moveTo(bx, by);
+        ctx.quadraticCurveTo(bx + b.lean * W * 0.005 + sway * 0.5, by - b.h * H * 0.6, bx + b.lean * W * 0.012 + sway, by - b.h * H);
+        ctx.lineWidth = b.w; ctx.stroke();
+      }
+    }
+  };
+
+  /* =========================================================
+     场景 2 · 上弦月 · 下午操场
+  ========================================================= */
+  function stadiumPath(cx, cy, L, r, sq) {
+    ctx.beginPath();
+    ctx.moveTo(cx - L, cy - r * sq);
+    ctx.lineTo(cx + L, cy - r * sq);
+    ctx.ellipse(cx + L, cy, r, r * sq, 0, -Math.PI / 2, Math.PI / 2, false);
+    ctx.lineTo(cx - L, cy + r * sq);
+    ctx.ellipse(cx - L, cy, r, r * sq, 0, Math.PI / 2, Math.PI * 1.5, false);
+    ctx.closePath();
+  }
+
+  const scene2 = {
+    name: '上弦月',
+    date: '农历 初八',
+    hotspot: { x: 0.5, y: 0.82, text: '一半明亮，一半隐没\n像极了没说出口的青春' },
+    init(W_, H_) {
+      const d = this.d = {};
+      d.clouds = [];
+      for (let i = 0; i < 7; i++) {
+        d.clouds.push({
+          x: Math.random(), y: 0.10 + Math.random() * 0.34,
+          s: 0.05 + Math.random() * 0.13, a: 0.35 + Math.random() * 0.45,
+          sp: 0.0035 + Math.random() * 0.008, lumps: 3 + Math.floor(Math.random() * 3)
+        });
+      }
+      d.buildings = [
+        { x0: -0.03, x1: 0.20, top: 0.455, bottom: 0.665 },
+        { x0: 0.17,  x1: 0.31, top: 0.535, bottom: 0.665 },
+        { x0: 0.76,  x1: 0.95, top: 0.475, bottom: 0.665 },
+        { x0: 0.90,  x1: 1.04, top: 0.545, bottom: 0.665 }
+      ];
+      for (const b of d.buildings) {
+        const wins = [], px0 = b.x0 * W_, px1 = b.x1 * W_;
+        const py0 = b.top * H_, py1 = b.bottom * H_;
+        const cw = 15, ch = 20;
+        const cols = Math.floor((px1 - px0 - 16) / cw);
+        const rows = Math.floor((py1 - py0 - 16) / ch);
+        if (cols > 0 && rows > 0) {
+          const offX = (px1 - px0 - cols * cw) / 2, offY = (py1 - py0 - rows * ch) / 2;
+          for (let r = 0; r < rows; r++) {
+            for (let c = 0; c < cols; c++) {
+              if (Math.random() < 0.22) continue;
+              wins.push({ x: px0 + offX + c * cw + 3.5, y: py0 + offY + r * ch + 4, w: cw - 7, h: ch - 9, a: 0.25 + Math.random() * 0.4 });
+            }
+          }
+        }
+        b.wins = wins;
+      }
+    },
+    draw(t) {
+      const d = this.d;
+      const PX = state.px * 14, PY = state.py * 10;
+      const g = ctx.createLinearGradient(0, 0, 0, H * 0.72);
+      g.addColorStop(0, '#5ba3d9'); g.addColorStop(0.45, '#8dc3e6'); g.addColorStop(0.8, '#c4dfef'); g.addColorStop(1, '#e2eef4');
+      ctx.fillStyle = g; ctx.fillRect(0, 0, W, H);
+      for (let i = 0; i < d.clouds.length; i++) {
+        const c = d.clouds[i], x = ((c.x + t * c.sp) % 1.35) - 0.18;
+        const cxp = x * W + PX * 0.8, cyp = c.y * H + PY * 0.8;
+        const baseR = c.s * W;
+        for (let k = 0; k < c.lumps; k++) {
+          const ang = (k / c.lumps) * TAU;
+          const ox = Math.cos(ang) * baseR * 0.72, oy = Math.sin(ang) * baseR * 0.22;
+          const rr = baseR * (0.5 + Math.random() * 0.001 + 0.45);
+          const cg = ctx.createRadialGradient(cxp + ox, cyp + oy, 0, cxp + ox, cyp + oy, rr);
+          cg.addColorStop(0, 'rgba(255,255,255,' + c.a + ')'); cg.addColorStop(0.55, 'rgba(255,255,255,' + (c.a * 0.45) + ')'); cg.addColorStop(1, 'rgba(255,255,255,0)');
+          ctx.save(); ctx.translate(cxp + ox, cyp + oy); ctx.scale(1, 0.48); ctx.translate(-(cxp + ox), -(cyp + oy));
+          ctx.fillStyle = cg; ctx.beginPath(); ctx.arc(cxp + ox, cyp + oy, rr, 0, TAU); ctx.fill(); ctx.restore();
+        }
+      }
+      const mx = W * 0.755 + PX * 0.9, my = H * 0.195 + PY * 0.9, R = Math.min(W, H) * 0.042;
+      ctx.save(); ctx.globalAlpha = 0.86;
+      drawMoonShape(mx, my, R, 0.5, 'rgba(255,255,255,0.92)', 0, 'rgba(255,255,255,0.7)', R * 1.4);
+      ctx.restore();
+      for (const b of d.buildings) {
+        const px0 = b.x0 * W, px1 = b.x1 * W, py0 = b.top * H, py1 = b.bottom * H;
+        const bg = ctx.createLinearGradient(0, py0, 0, py1);
+        bg.addColorStop(0, '#5c7186'); bg.addColorStop(1, '#42566b');
+        ctx.fillStyle = bg; ctx.fillRect(px0, py0, px1 - px0, py1 - py0);
+        ctx.fillStyle = '#4d6076'; ctx.fillRect(px0 - 2, py0 - 3, px1 - px0 + 4, 3.5);
+        ctx.fillStyle = 'rgba(150,180,205,0.55)';
+        for (let i = 0; i < b.wins.length; i++) {
+          const w = b.wins[i]; ctx.globalAlpha = w.a; ctx.fillRect(w.x, w.y, w.w, w.h);
+        }
+        ctx.globalAlpha = 1;
+      }
+      const gg = ctx.createLinearGradient(0, H * 0.66, 0, H);
+      gg.addColorStop(0, '#6d8a5c'); gg.addColorStop(0.3, '#5b7a4d'); gg.addColorStop(1, '#3a5436');
+      ctx.fillStyle = gg; ctx.fillRect(0, H * 0.66, W, H * 0.34);
+      const cx = W * 0.5, cy = H * 0.845, L = W * 0.155, rOut = W * 0.195, rIn = rOut * 0.615, sq = 0.55;
+      stadiumPath(cx, cy, L, rOut, sq); ctx.fillStyle = '#b8463a'; ctx.fill();
+      stadiumPath(cx, cy, L, rIn, sq); ctx.fillStyle = '#5d8a49'; ctx.fill();
+      for (let i = 0; i <= 4; i++) {
+        const rr = lerp(rIn, rOut, i / 4);
+        stadiumPath(cx, cy, L, rr, sq);
+        ctx.strokeStyle = 'rgba(255,255,255,' + (i === 0 || i === 4 ? 0.9 : 0.6) + ')';
+        ctx.lineWidth = 1.4; ctx.stroke();
+      }
+      ctx.beginPath(); ctx.moveTo(cx, cy - rIn * sq * 0.9); ctx.lineTo(cx, cy + rIn * sq * 0.9);
+      ctx.strokeStyle = 'rgba(255,255,255,0.35)'; ctx.lineWidth = 1.2; ctx.stroke();
+    }
+  };
+
+  /* =========================================================
+     场景 3 · 渐盈凸月 · 县城夜市
+  ========================================================= */
+  const scene3 = {
+    name: '渐盈凸月',
+    date: '农历 十一',
+    hotspot: { x: 0.5, y: 0.84, text: '烟火人间，最抚凡人心\n今晚的夜宵，是月亮的形状' },
+    init(W_, H_) {
+      const d = this.d = {};
+      const HOR = H_ * 0.66;
+      d.stalls = []; d.bulbs = []; d.strings = [];
+      for (let side = -1; side <= 1; side += 2) {
+        const arr = [];
+        for (let i = 0; i < 7; i++) {
+          const s = 0.10 + i * 0.132 + Math.random() * 0.035;
+          const rh = W_ * 0.33 * Math.pow(s, 1.5);
+          const ww = W_ * 0.32 * Math.pow(s, 1.6);
+          const y = HOR + (H_ - HOR) * Math.pow(s, 1.85);
+          const h = H_ * 0.26 * Math.pow(s, 1.5);
+          const x0 = side < 0 ? (W_ * 0.5 - rh - ww) : (W_ * 0.5 + rh);
+          const x1 = x0 + ww;
+          const st = { side, s, x0, x1, y, h, ww, hue: [8, 18, 32, 350, 42][Math.floor(Math.random() * 5)], dark: 0.42 + Math.random() * 0.22 };
+          d.stalls.push(st); arr.push(st);
+        }
+        arr.sort((a, b) => a.s - b.s);
+        for (let i = 0; i < arr.length - 1; i++) {
+          const A = arr[i], B = arr[i + 1];
+          const ax = side < 0 ? A.x1 - A.ww * 0.13 : A.x0 + A.ww * 0.13;
+          const ay = A.y - A.h;
+          const bx = side < 0 ? B.x1 - B.ww * 0.13 : B.x0 + B.ww * 0.13;
+          const by = B.y - B.h;
+          d.strings.push({ ax, ay, bx, by });
+          const n = 8;
+          for (let k = 1; k < n; k++) {
+            const u = k / n, x = lerp(ax, bx, u);
+            const y = lerp(ay, by, u) + Math.sin(u * Math.PI) * 16 * (0.5 + B.s);
+            d.bulbs.push({ x: x + (Math.random() - 0.5) * 7, y: y + (Math.random() - 0.5) * 5, r: 1.0 + Math.random() * 2.0, hue: [38, 20, 50, 8, 45][Math.floor(Math.random() * 5)], ph: Math.random() * TAU, sp: 1.0 + Math.random() * 2.4 });
+          }
+        }
+      }
+      d.stalls.sort((a, b) => a.s - b.s);
+      d.smoke = [];
+      for (let i = 0; i < 30; i++) {
+        d.smoke.push({ x: 0.16 + Math.random() * 0.68, y0: 0.72 + Math.random() * 0.26, spd: 0.025 + Math.random() * 0.045, off: Math.random(), r: 0.012 + Math.random() * 0.03, ph: Math.random() * TAU, a: 0.05 + Math.random() * 0.075 });
+      }
+      d.farLights = [];
+      for (let i = 0; i < 70; i++) {
+        d.farLights.push({ x: Math.random(), y: HOR - Math.random() * H_ * 0.10, r: 0.6 + Math.random() * 1.6, a: 0.15 + Math.random() * 0.5, ph: Math.random() * TAU });
+      }
+    },
+    draw(t) {
+      const d = this.d, HOR = H * 0.66;
+      const PX = state.px * 13, PY = state.py * 9;
+      const g = ctx.createLinearGradient(0, 0, 0, HOR + H * 0.1);
+      g.addColorStop(0, '#050a1e'); g.addColorStop(0.32, '#0d1338'); g.addColorStop(0.58, '#241c46');
+      g.addColorStop(0.78, '#4c2c46'); g.addColorStop(0.92, '#8a4c3c'); g.addColorStop(1, '#c26e3c');
+      ctx.fillStyle = g; ctx.fillRect(0, 0, W, H);
+      ctx.globalCompositeOperation = 'lighter';
+      for (let i = 0; i < d.farLights.length; i++) {
+        const f = d.farLights[i], a = f.a * (0.6 + 0.4 * Math.sin(t * 1.6 + f.ph));
+        ctx.fillStyle = 'rgba(255,180,110,' + (a * 0.7) + ')';
+        ctx.beginPath(); ctx.arc(f.x * W, f.y, f.r, 0, TAU); ctx.fill();
+      }
+      ctx.globalCompositeOperation = 'source-over';
+      const mx = W * 0.735 + PX * 0.9, my = H * 0.185 + PY * 0.9, R = Math.min(W, H) * 0.058;
+      drawMoonShape(mx, my, R, 0.76, '#fff2cf', 0.1, 'rgba(255,225,160,0.85)', R * 1.6);
+      ctx.fillStyle = '#0a0a12'; ctx.fillRect(0, HOR, W, H - HOR);
+      const roadHalf = W * 0.34;
+      ctx.beginPath(); ctx.moveTo(W * 0.5 - roadHalf * 0.06, HOR); ctx.lineTo(-W * 0.05, H); ctx.lineTo(W * 1.05, H); ctx.lineTo(W * 0.5 + roadHalf * 0.06, HOR); ctx.closePath();
+      const rg = ctx.createLinearGradient(0, HOR, 0, H);
+      rg.addColorStop(0, '#241a24'); rg.addColorStop(0.4, '#18121c'); rg.addColorStop(1, '#0e0a12');
+      ctx.fillStyle = rg; ctx.fill();
+      for (let i = 0; i < d.stalls.length; i++) {
+        const st = d.stalls[i], topY = st.y - st.h, inset = (st.x1 - st.x0) * 0.13;
+        ctx.beginPath(); ctx.moveTo(st.x0, st.y); ctx.lineTo(st.x0 + inset, topY); ctx.lineTo(st.x1 - inset, topY); ctx.lineTo(st.x1, st.y); ctx.closePath();
+        ctx.fillStyle = 'hsl(' + st.hue + ',45%,' + (10 + st.dark * 14) + '%)'; ctx.fill();
+        ctx.beginPath(); ctx.moveTo(st.x0 + inset, topY); ctx.lineTo(st.x1 - inset, topY);
+        ctx.strokeStyle = 'hsla(' + st.hue + ',70%,55%,' + (0.18 + st.s * 0.2) + ')'; ctx.lineWidth = 1 + st.s * 1.6; ctx.stroke();
+        ctx.beginPath(); ctx.moveTo(st.x0, st.y); ctx.lineTo(st.x0, st.y - st.h * 0.55); ctx.moveTo(st.x1, st.y); ctx.lineTo(st.x1, st.y - st.h * 0.55);
+        ctx.strokeStyle = 'rgba(20,14,20,0.9)'; ctx.lineWidth = 1 + st.s * 1.5; ctx.stroke();
+        const lg = ctx.createRadialGradient((st.x0 + st.x1) / 2, st.y - st.h * 0.25, 0, (st.x0 + st.x1) / 2, st.y - st.h * 0.25, st.ww * 0.8);
+        lg.addColorStop(0, 'hsla(' + st.hue + ',95%,62%,' + (0.10 + st.s * 0.16) + ')'); lg.addColorStop(1, 'hsla(' + st.hue + ',95%,50%,0)');
+        ctx.fillStyle = lg; ctx.beginPath(); ctx.arc((st.x0 + st.x1) / 2, st.y - st.h * 0.25, st.ww * 0.8, 0, TAU); ctx.fill();
+      }
+      ctx.strokeStyle = 'rgba(30,22,26,0.75)'; ctx.lineWidth = 1;
+      for (const s of d.strings) {
+        ctx.beginPath(); ctx.moveTo(s.ax, s.ay);
+        ctx.quadraticCurveTo((s.ax + s.bx) / 2, (s.ay + s.by) / 2 + Math.abs(s.bx - s.ax) * 0.12, s.bx, s.by); ctx.stroke();
+      }
+      ctx.globalCompositeOperation = 'lighter';
+      for (let i = 0; i < d.bulbs.length; i++) {
+        const b = d.bulbs[i], flick = 0.62 + 0.38 * Math.sin(t * b.sp + b.ph);
+        ctx.fillStyle = 'hsla(' + b.hue + ',100%,68%,' + (0.16 * flick) + ')';
+        ctx.beginPath(); ctx.arc(b.x, b.y, b.r * 4.2, 0, TAU); ctx.fill();
+        ctx.fillStyle = 'hsla(' + b.hue + ',100%,84%,' + (0.88 * flick) + ')';
+        ctx.beginPath(); ctx.arc(b.x, b.y, b.r, 0, TAU); ctx.fill();
+      }
+      ctx.globalCompositeOperation = 'source-over';
+      for (let i = 0; i < d.smoke.length; i++) {
+        const s = d.smoke[i], prog = (t * s.spd + s.off) % 1;
+        const x = s.x * W + Math.sin(t * 0.55 + s.ph) * W * 0.035 * prog;
+        const y = H * s.y0 - prog * H * 0.46, r = s.r * W * (0.5 + prog * 2.4), a = s.a * Math.sin(prog * Math.PI);
+        if (a <= 0.003) continue;
+        const sg = ctx.createRadialGradient(x, y, 0, x, y, r);
+        sg.addColorStop(0, 'rgba(232,218,205,' + a + ')'); sg.addColorStop(0.5, 'rgba(210,196,190,' + (a * 0.45) + ')'); sg.addColorStop(1, 'rgba(190,180,180,0)');
+        ctx.fillStyle = sg; ctx.beginPath(); ctx.arc(x, y, r, 0, TAU); ctx.fill();
+      }
+    }
+  };
+
+  /* =========================================================
+     场景 4 · 满月 · 城市天际线（上海浦东）
+  ========================================================= */
+  const scene4 = {
+    name: '满月 · 望',
+    date: '农历 十五',
+    hotspot: { x: 0.5, y: 0.88, text: '把城市交给灯火\n把月亮交给你\n生日快乐,X' },
+    init(W_, H_) {
+      const d = this.d = {};
+      d.craters = [];
+      for (let i = 0; i < 15; i++) {
+        const ang = Math.random() * TAU, rad = Math.sqrt(Math.random()) * 0.78;
+        d.craters.push({ x: Math.cos(ang) * rad, y: Math.sin(ang) * rad, r: 0.05 + Math.random() * 0.14, a: 0.035 + Math.random() * 0.075 });
+      }
+      d.waves = [];
+      for (let i = 0; i < 110; i++) {
+        d.waves.push({ x: Math.random(), y: Math.random(), w: 0.008 + Math.random() * 0.055, a: 0.05 + Math.random() * 0.14, ph: Math.random() * TAU });
+      }
+      d.stars = [];
+      for (let i = 0; i < 70; i++) {
+        d.stars.push({ x: Math.random(), y: Math.random() * 0.42, r: 0.3 + Math.random() * 0.9, a: 0.06 + Math.random() * 0.35, ph: Math.random() * TAU, sp: 0.8 + Math.random() * 1.8 });
+      }
+      d.winLights = [];
+      const towers = [
+        { x: 0.19, hw: 0.03,  top: 0.665, name: 'pearl' }, { x: 0.35, hw: 0.026, top: 0.685, name: 'jinmao' },
+        { x: 0.50, hw: 0.028, top: 0.695, name: 'swfc' }, { x: 0.635, hw: 0.034, top: 0.660, name: 'sh' },
+        { x: 0.075, hw: 0.030, top: 0.775, name: 'block' }, { x: 0.775, hw: 0.026, top: 0.760, name: 'block' },
+        { x: 0.865, hw: 0.030, top: 0.735, name: 'block' }, { x: 0.945, hw: 0.026, top: 0.785, name: 'block' },
+        { x: 0.295, hw: 0.018, top: 0.800, name: 'block' }, { x: 0.565, hw: 0.020, top: 0.790, name: 'block' },
+        { x: 0.710, hw: 0.022, top: 0.795, name: 'block' }
+      ];
+      for (const tw of towers) {
+        const n = 8 + Math.floor(Math.random() * 10);
+        for (let i = 0; i < n; i++) {
+          d.winLights.push({ x: tw.x * W_ + (Math.random() - 0.5) * tw.hw * W_ * 1.5, y: lerp(tw.top * H_, H_ * 0.9, Math.random()), r: 0.8 + Math.random() * 1.5, a: 0.25 + Math.random() * 0.6, ph: Math.random() * TAU });
+        }
+      }
+    },
+    draw(t) {
+      const d = this.d;
+      const PX = state.px * 14, PY = state.py * 10;
+      const baseY = H * 0.90;
+      const g = ctx.createLinearGradient(0, 0, 0, H * 0.95);
+      g.addColorStop(0, '#120a2e'); g.addColorStop(0.22, '#2c1550'); g.addColorStop(0.42, '#59245f');
+      g.addColorStop(0.60, '#983d5b'); g.addColorStop(0.76, '#d2694e'); g.addColorStop(0.88, '#f2a04b'); g.addColorStop(1, '#ffc772');
+      ctx.fillStyle = g; ctx.fillRect(0, 0, W, H);
+      for (let i = 0; i < d.stars.length; i++) {
+        const s = d.stars[i], a = s.a * (0.45 + 0.55 * Math.sin(t * s.sp + s.ph));
+        ctx.globalAlpha = a * 0.65; ctx.fillStyle = '#fff';
+        ctx.beginPath(); ctx.arc(s.x * W + PX * 0.5, s.y * H + PY * 0.5, s.r, 0, TAU); ctx.fill();
+      }
+      ctx.globalAlpha = 1;
+      const mx = W * 0.535 + PX * 0.55, my = H * 0.325 + PY * 0.55, R = Math.min(W * 0.265, H * 0.185);
+      const hg = ctx.createRadialGradient(mx, my, R * 0.82, mx, my, R * 2.9);
+      hg.addColorStop(0, 'rgba(255,214,130,0.34)'); hg.addColorStop(0.35, 'rgba(255,178,92,0.13)'); hg.addColorStop(1, 'rgba(255,150,70,0)');
+      ctx.fillStyle = hg; ctx.beginPath(); ctx.arc(mx, my, R * 2.9, 0, TAU); ctx.fill();
+      const mg = ctx.createRadialGradient(mx - R * 0.32, my - R * 0.34, R * 0.08, mx, my, R);
+      mg.addColorStop(0, '#fffbe0'); mg.addColorStop(0.42, '#ffe7a0'); mg.addColorStop(0.78, '#f9c85f'); mg.addColorStop(1, '#e9a93c');
+      ctx.beginPath(); ctx.arc(mx, my, R, 0, TAU); ctx.fillStyle = mg; ctx.fill();
+      for (let i = 0; i < d.craters.length; i++) {
+        const c = d.craters[i];
+        ctx.beginPath(); ctx.arc(mx + c.x * R, my + c.y * R, c.r * R, 0, TAU);
+        ctx.fillStyle = 'rgba(198,150,72,' + c.a + ')'; ctx.fill();
+      }
+      const fg = ctx.createLinearGradient(0, H * 0.55, 0, H * 0.9);
+      fg.addColorStop(0, 'rgba(255,170,110,0)'); fg.addColorStop(1, 'rgba(255,150,90,0.22)');
+      ctx.fillStyle = fg; ctx.fillRect(0, H * 0.55, W, H * 0.35);
+      const silhouette = '#2a1c38', silhouette2 = '#382448';
+      const bgBlocks = [
+        [0.075, 0.030, 0.775], [0.775, 0.026, 0.760], [0.865, 0.030, 0.735], [0.945, 0.026, 0.785],
+        [0.295, 0.018, 0.800], [0.565, 0.020, 0.790], [0.710, 0.022, 0.795], [0.005, 0.026, 0.800],
+        [0.995, 0.022, 0.810], [0.42, 0.014, 0.815], [0.155, 0.014, 0.808], [0.685, 0.014, 0.812]
+      ];
+      ctx.fillStyle = silhouette;
+      for (const [bx, bhw, btop] of bgBlocks) {
+        const x0 = bx * W - bhw * W, x1 = bx * W + bhw * W, y0 = btop * H;
+        ctx.fillRect(x0, y0, x1 - x0, baseY - y0);
+        ctx.fillRect(bx * W - 1, y0 - H * 0.018, 2, H * 0.018);
+      }
+      (function () {
+        const cx = W * 0.35, h = H * 0.215, topY = baseY - h, hw = W * 0.024;
+        ctx.fillStyle = silhouette2;
+        ctx.fillRect(cx - hw, baseY - h * 0.45, hw * 2, h * 0.45);
+        ctx.fillRect(cx - hw * 0.78, baseY - h * 0.72, hw * 1.56, h * 0.30);
+        ctx.fillRect(cx - hw * 0.55, baseY - h * 0.90, hw * 1.10, h * 0.20);
+        ctx.fillRect(cx - hw * 0.13, topY, hw * 0.26, h * 0.12);
+      })();
+      (function () {
+        const cx = W * 0.50, h = H * 0.205, hw = W * 0.028, topY = baseY - h;
+        ctx.beginPath(); ctx.moveTo(cx - hw, baseY); ctx.lineTo(cx - hw, topY + h * 0.20); ctx.lineTo(cx - hw * 0.42, topY + h * 0.04); ctx.lineTo(cx + hw * 0.42, topY + h * 0.04); ctx.lineTo(cx + hw, topY + h * 0.20); ctx.lineTo(cx + hw, baseY); ctx.closePath();
+        ctx.fillStyle = silhouette2; ctx.fill();
+      })();
+      (function () {
+        const cx = W * 0.635, h = H * 0.240, hw = W * 0.034, topY = baseY - h;
+        ctx.beginPath(); ctx.moveTo(cx - hw, baseY);
+        ctx.bezierCurveTo(cx - hw * 0.92, baseY - h * 0.40, cx - hw * 0.56, baseY - h * 0.76, cx - hw * 0.17, topY);
+        ctx.lineTo(cx + hw * 0.17, topY);
+        ctx.bezierCurveTo(cx + hw * 0.56, baseY - h * 0.76, cx + hw * 0.92, baseY - h * 0.40, cx + hw, baseY);
+        ctx.closePath(); ctx.fillStyle = silhouette2; ctx.fill();
+      })();
+      (function () {
+        const cx = W * 0.19, h = H * 0.235, w0 = W * 0.030;
+        ctx.fillStyle = silhouette2;
+        ctx.beginPath(); ctx.moveTo(cx - w0, baseY); ctx.lineTo(cx - W * 0.006, baseY - h * 0.20); ctx.lineTo(cx - W * 0.0025, baseY - h * 0.20); ctx.lineTo(cx - w0 * 0.42, baseY); ctx.closePath(); ctx.fill();
+        ctx.beginPath(); ctx.moveTo(cx + w0, baseY); ctx.lineTo(cx + W * 0.006, baseY - h * 0.20); ctx.lineTo(cx + W * 0.0025, baseY - h * 0.20); ctx.lineTo(cx + w0 * 0.42, baseY); ctx.closePath(); ctx.fill();
+        ctx.fillRect(cx - W * 0.004, baseY - h * 0.06, W * 0.008, h * 0.06);
+        ctx.fillRect(cx - W * 0.014, baseY - h * 0.215, W * 0.028, h * 0.022);
+        ctx.fillRect(cx - W * 0.005, baseY - h * 0.68, W * 0.010, h * 0.53);
+        ctx.beginPath(); ctx.arc(cx, baseY - h * 0.20, W * 0.014, 0, TAU); ctx.fill();
+        ctx.beginPath(); ctx.arc(cx, baseY - h * 0.60, W * 0.010, 0, TAU); ctx.fill();
+        ctx.fillRect(cx - 1, baseY - h * 0.85, 2, h * 0.30);
+      })();
+      ctx.globalCompositeOperation = 'lighter';
+      for (let i = 0; i < d.winLights.length; i++) {
+        const w = d.winLights[i], a = w.a * (0.7 + 0.3 * Math.sin(t * 1.2 + w.ph));
+        ctx.fillStyle = 'rgba(255,205,140,' + (a * 0.6) + ')';
+        ctx.beginPath(); ctx.arc(w.x, w.y, w.r, 0, TAU); ctx.fill();
+      }
+      ctx.globalCompositeOperation = 'source-over';
+      const wg = ctx.createLinearGradient(0, baseY, 0, H);
+      wg.addColorStop(0, '#3a2340'); wg.addColorStop(0.35, '#241634'); wg.addColorStop(1, '#0c0718');
+      ctx.fillStyle = wg; ctx.fillRect(0, baseY, W, H - baseY);
+      ctx.save(); ctx.globalAlpha = 0.30; ctx.translate(0, baseY * 2); ctx.scale(1, -1); ctx.fillStyle = '#3a2340';
+      for (const [bx, bhw, btop] of bgBlocks) { ctx.fillRect(bx * W - bhw * W, btop * H, bhw * W * 2, baseY - btop * H); }
+      ctx.restore();
+      const rp = ctx.createLinearGradient(0, baseY, 0, H);
+      rp.addColorStop(0, 'rgba(255,206,120,0.40)'); rp.addColorStop(0.5, 'rgba(255,186,96,0.14)'); rp.addColorStop(1, 'rgba(255,170,80,0)');
+      ctx.fillStyle = rp; ctx.fillRect(mx - R * 0.62, baseY, R * 1.24, H - baseY);
+      ctx.globalCompositeOperation = 'lighter';
+      for (let i = 0; i < d.waves.length; i++) {
+        const w = d.waves[i], y = baseY + (H - baseY) * w.y, x = (w.x + Math.sin(t * 0.65 + w.ph) * 0.022) * W;
+        const distMoon = Math.abs(x - mx) / (W * 0.5), boost = 1 - Math.min(1, distMoon), a = w.a * (0.35 + boost * 0.9);
+        ctx.fillStyle = 'rgba(255,208,140,' + a + ')'; ctx.fillRect(x, y, w.w * W, 1.3);
+      }
+      ctx.globalCompositeOperation = 'source-over';
+      const seam = ctx.createLinearGradient(0, baseY - 2, 0, baseY + 8);
+      seam.addColorStop(0, 'rgba(255,190,120,0.30)'); seam.addColorStop(1, 'rgba(255,170,100,0)');
+      ctx.fillStyle = seam; ctx.fillRect(0, baseY - 2, W, 10);
+    }
+  };
+
+  const scenes = [scene0, scene1, scene2, scene3, scene4];
+
+  /* =========================================================
+     尺寸 & 初始化
+  ========================================================= */
+  let lastW = 0, lastH = 0;
+
+  function resize(force) {
+    const nw = window.innerWidth;
+    const nh = window.innerHeight;
+    if (!force && Math.abs(nw - lastW) < 2 && Math.abs(nh - lastH) < 2) return;
+    lastW = nw; lastH = nh;
+
+    // 限制最大 DPR，防止折叠屏/高分屏导致严重卡顿
+    DPR = Math.min(window.devicePixelRatio || 1, 2.5);
+    W = nw;
+    H = nh;
+    
+    canvas.width = Math.round(W * DPR);
+    canvas.height = Math.round(H * DPR);
+    canvas.style.width = W + 'px';
+    canvas.style.height = H + 'px';
+    
+    ctx.setTransform(DPR, 0, 0, DPR, 0, 0);
+
+    for (let i = 0; i < scenes.length; i++) scenes[i].init(W, H);
+  }
+
+  /* =========================================================
+     HUD / 导航 / 互动点
+  ========================================================= */
+  function buildDots() {
+    dotsEl.innerHTML = '';
+    for (let i = 0; i < scenes.length; i++) {
+      const el = document.createElement('i');
+      el.dataset.i = i;
+      el.addEventListener('click', function (e) {
+        e.stopPropagation();
+        goTo(parseInt(this.dataset.i, 10));
+      });
+      dotsEl.appendChild(el);
+    }
+  }
+
+  function updateHUD() {
+    hudName.textContent = scenes[state.cur].name;
+    hudDate.textContent = scenes[state.cur].date;
+    dotsEl.classList.toggle('show', state.hasReachedEnd);
+    const kids = dotsEl.children;
+    for (let i = 0; i < kids.length; i++) {
+      kids[i].classList.toggle('active', i === state.cur);
+    }
+  }
+
+  function showHotspot() {
+    if (state.isModalOpen) return;
+    const hs = scenes[state.cur].hotspot;
+    if (hs) {
+      hotspot.style.left = (hs.x * 100) + '%';
+      hotspot.style.top = (hs.y * 100) + '%';
+      hotspot.dataset.text = hs.text.replace(/\n/g, '<br>');
+      hotspot.classList.add('show');
+    }
+  }
+
+  function hideHotspot() {
+    hotspot.classList.remove('show');
+  }
+
+  /* =========================================================
+     弹窗逻辑
+  ========================================================= */
+  function openModal(htmlText) {
+    modalText.innerHTML = htmlText;
+    modal.classList.add('show');
+    state.isModalOpen = true;
+    hideHotspot();
+  }
+
+  function closeModal() {
+    modal.classList.remove('show');
+    state.isModalOpen = false;
+    setTimeout(showHotspot, 300);
+  }
+
+  hotspot.addEventListener('click', function (e) {
+    e.stopPropagation();
+    openModal(this.dataset.text);
+  });
+
+  modal.addEventListener('click', function (e) {
+    if (e.target === modal || e.target.id === 'closeModal') {
+      closeModal();
+    }
+  });
+
+  /* =========================================================
+     场景切换
+  ========================================================= */
+  function goTo(n) {
+    if (state.busy || state.isModalOpen) return;
+    if (n < 0 || n >= scenes.length) return;
+    if (n === state.cur) return;
+    if (!state.hasReachedEnd && n < state.cur) return;
+
+    state.busy = true;
+    hideHotspot();
+
+    curtain.style.transition = 'opacity .42s ease';
+    curtain.style.opacity = '1';
+
+    setTimeout(function () {
+      state.cur = n;
+      if (state.cur === scenes.length - 1) state.hasReachedEnd = true;
+      updateHUD();
+      
+      setTimeout(function () {
+        curtain.style.transition = 'opacity .70s ease';
+        curtain.style.opacity = '0';
+        setTimeout(function () { 
+          state.busy = false; 
+          showHotspot(); 
+        }, 720);
+      }, 50);
+    }, 440);
+  }
+
+  /* =========================================================
+     输入与事件（优化设备兼容）
+  ========================================================= */
+  let touchStartX = 0, touchStartY = 0, touchStartT = 0, touchMoved = false;
+  let isTouchDevice = false;
+
+  window.addEventListener('touchstart', function (e) {
+    if (state.isModalOpen) return;
+    isTouchDevice = true;
+    const tp = e.touches[0];
+    touchStartX = tp.clientX;
+    touchStartY = tp.clientY;
+    touchStartT = Date.now();
+    touchMoved = false;
+    state.tx = (tp.clientX / W - 0.5) * 2;
+    state.ty = (tp.clientY / H - 0.5) * 2;
+  }, { passive: true });
+
+  window.addEventListener('touchmove', function (e) {
+    if (state.isModalOpen) return;
+    const tp = e.touches[0];
+    const dx = tp.clientX - touchStartX;
+    const dy = tp.clientY - touchStartY;
+    if (Math.abs(dx) > 10 || Math.abs(dy) > 10) touchMoved = true;
+    state.tx = (tp.clientX / W - 0.5) * 2;
+    state.ty = (tp.clientY / H - 0.5) * 2;
+  }, { passive: true });
+
+  window.addEventListener('touchend', function (e) {
+    if (state.isModalOpen) return;
+    const tp = e.changedTouches[0];
+    const dx = tp.clientX - touchStartX;
+    const dy = tp.clientY - touchStartY;
+    const dt = Date.now() - touchStartT;
+
+    if (e.target.closest('#hotspot')) return;
+
+    if (Math.abs(dx) > 48 && Math.abs(dx) > Math.abs(dy) * 1.3 && dt < 900) {
+      goTo(state.cur + (dx < 0 ? 1 : -1));
+    } else if (!touchMoved && dt < 400) {
+      goTo(state.cur + (tp.clientX < W * 0.5 ? -1 : 1));
+    }
+    touchStartX = -9999;
+  }, { passive: true });
+
+  window.addEventListener('mousemove', function (e) {
+    // 如果在刚触摸过，或者设备本身不支持 hover，则忽略鼠标移动视差
+    if (isTouchDevice) {
+      if (e.movementX === 0 && e.movementY === 0) return;
+    }
+    state.tx = (e.clientX / W - 0.5) * 2;
+    state.ty = (e.clientY / H - 0.5) * 2;
+  });
+
+  window.addEventListener('click', function (e) {
+    if (state.isModalOpen) return;
+    if (e.target.closest('#dots') || e.target.closest('#hotspot')) return;
+    if (state.busy) return;
+    goTo(state.cur + (e.clientX < W * 0.5 ? -1 : 1));
+  });
+
+  window.addEventListener('keydown', function (e) {
+    if (state.isModalOpen) {
+      if (e.key === 'Escape') closeModal();
+      return;
+    }
+    if (e.key === 'ArrowRight') goTo(state.cur + 1);
+    if (e.key === 'ArrowLeft') goTo(state.cur - 1);
+  });
+
+  /* =========================================================
+     主循环
+  ========================================================= */
+  let t0 = performance.now();
+
+  function loop(now) {
+    const t = (now - t0) / 1000;
+    state.px += (state.tx - state.px) * 0.055;
+    state.py += (state.ty - state.py) * 0.055;
+    ctx.setTransform(DPR, 0, 0, DPR, 0, 0);
+    scenes[state.cur].draw(t);
+    requestAnimationFrame(loop);
+  }
+
+  /* =========================================================
+     启动与设备旋转处理
+  ========================================================= */
+  let resizeTimer = null;
+  function handleResize() {
+    clearTimeout(resizeTimer);
+    resizeTimer = setTimeout(function () { resize(false); }, 180);
+  }
+  
+  window.addEventListener('resize', handleResize);
+  window.addEventListener('orientationchange', function () {
+    // 旋转屏幕时强制重绘并适配
+    setTimeout(function () { resize(true); }, 260);
+  });
+
+  // 为 iOS 地址栏出现/隐藏做特殊处理
+  if (window.visualViewport) {
+    window.visualViewport.addEventListener('resize', handleResize);
+  }
+
+  buildDots();
+  resize(true);
+  updateHUD();
+
+  requestAnimationFrame(loop);
+
+  requestAnimationFrame(function () {
+    setTimeout(function () {
+      curtain.style.transition = 'opacity 1.4s ease';
+      curtain.style.opacity = '0';
+      setTimeout(showHotspot, 1600);
+    }, 120);
+  });
+
+})();
+</script>
+</body>
+</html>
