@@ -96,23 +96,45 @@
   }
 
   h1 {
-    font-size: clamp(2.5rem, 6vw, 4rem);
-    font-weight: 700;
-    letter-spacing: -0.03em;
-    margin-bottom: 12px;
-    background: linear-gradient(135deg, #fff, #a1a1aa);
-    background-clip: text;
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-  }
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  font-size: clamp(2rem, 5vw, 3rem);
+  font-weight: 600;       /* 半粗，显得现代 */
+  letter-spacing: -0.03em; /* 标题稍微紧凑一点，更有力量感 */
+}
 
-  .bio {
-    color: var(--muted);
-    font-size: clamp(1rem, 2vw, 1.2rem);
-    margin-bottom: 60px;
-    font-family: monospace;
-    letter-spacing: 0.05em;
-  }
+.bio {
+  color: var(--muted);
+  font-size: clamp(1rem, 2vw, 1.2rem);
+  margin-bottom: 24px; 
+  font-family: monospace;
+  letter-spacing: 0.05em;
+}
+
+  /* 分隔线容器 */
+  .divider {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 32px 0; /* 上下留出空间 */
+  width: 100%;
+  opacity: 0.8;
+  line-height: -1; /* 防止文字撑开高度导致上浮 */
+}
+.divider .line {
+  flex: 1;
+  height: 2px;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+}
+.divider .text {
+  padding: 0 16px;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: var(--muted);
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  white-space: nowrap; /* 防止文字换行 */
+}
 
   .main-projects {
     display: flex;
@@ -293,8 +315,14 @@
 
 <div class="container">
   <header class="hero">
-    <h1>kW97_</h1>
+    <h1>kW97_-html_trials</h1>
     <p class="bio">a recruit exploring his way...</p>
+    
+    <div class="divider">
+      <span class="line"></span>
+      <span class="text">html-experiments</span>
+      <span class="line"></span>
+    </div>
 
     <div class="main-projects">
       <a href="https://kw972026.github.io/html_trials/MOONJOURNEY_Multimedia_HB.html" class="card primary">
@@ -304,7 +332,7 @@
       
       <a href="https://kw972026.github.io/html_trials/dreamjourney_v2.0.html" class="card primary">
         <h2>梦境之旅 v2.0 <span style="font-size:1rem; opacity:0.5;">↗</span></h2>
-        <p>全新升级的画面与多场景交互，在晚霞、极光与林间穿梭。</p>
+        <p>全新升级的画面与多场景交互，在晚霞、极光与月下穿梭。</p>
       </a>
     </div>
   </header>
@@ -319,8 +347,8 @@
       </a>
 
       <a href="https://kw972026.github.io/html_trials/mobilettest.html" class="card secondary">
-        <h3>移动端测试页</h3>
-        <p>用于 Canvas 响应式与触摸手势的开发角落。</p>
+        <h3>浏览器测试页</h3>
+        <p>用于检查浏览器兼容性。</p>
       </a>
     </div>
   </section>
