@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>kW97_</title>
+<style>
+  :root {
+    --bg: #0a0a0c;
+    --text: #e4e4e7;
+    --muted: #71717a;
+    --accent: #a1a1aa;
+    --hover: #f4f4f5;
+  }
+  
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  
+  body {
+    background-color: var(--bg);
+    color: var(--text);
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, "Noto Sans SC", sans-serif;
+    line-height: 1.6;
+    -webkit-font-smoothing: antialiased;
+    
+    /* 极简居中 */
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    min-height: 100vh;
+    padding: 2rem;
+  }
+
+  /* 淡淡的进入动画 */
+  .container {
+    max-width: 480px;
+    width: 100%;
+    animation: fadeIn 1.2s ease-out;
+  }
+
+  @keyframes fadeIn {
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  h1 {
+    font-size: 1.5rem;
+    font-weight: 500;
+    letter-spacing: 0.05em;
+    margin-bottom: 0.5rem;
+  }
+
+  .bio {
+    color: var(--muted);
+    font-size: 0.95rem;
+    margin-bottom: 3rem;
+  }
+
+  .section-title {
+    font-size: 0.8rem;
+    color: var(--muted);
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    margin-bottom: 1rem;
+    border-bottom: 1px solid #27272a;
+    padding-bottom: 0.5rem;
+  }
+
+  ul {
+    list-style: none;
+  }
+
+  li {
+    margin-bottom: 1rem;
+  }
+
+  a {
+    color: var(--accent);
+    text-decoration: none;
+    font-size: 0.95rem;
+    transition: color 0.2s ease;
+    display: inline-block;
+  }
+
+  a:hover {
+    color: var(--hover);
+  }
+
+  .project-desc {
+    display: block;
+    font-size: 0.8rem;
+    color: #52525b;
+    margin-top: 0.2rem;
+  }
+
+  footer {
+    margin-top: 4rem;
+    font-size: 0.75rem;
+    color: #3f3f46;
+  }
+</style>
+</head>
+<body>
+
+<div class="container">
+  <header>
+    <h1>kW97_</h1>
+    <p class="bio">
+      探索代码、算法与视觉、情绪的交汇处。<br>
+      偶尔用前端写点脑海里的幻想。
+    </p>
+  </header>
+
+  <main>
+    <div class="section-title">Experiments</div>
+    <ul>
+      <li>
+        <a href="https://kw972026.github.io/html_trials/MOONJOURNEY_Multimedia_HB.html">月相之旅</a>
+        <span class="project-desc">从新月到满月的五个预设场景交互</span>
+      </li>
+      <li>
+        <a href="https://kw972026.github.io/html_trials/dreamjourney_v2.0.html">梦境之旅v2.0</a>
+        <span class="project-desc">月下石洞、晚霞海岸与极地雪原的治愈穿梭</span>
+      </li>
+      <li>
+        <a href="https://kw972026.github.io/html_trials/JOURNEY_Multimediaversion.html">三重梦境</a>
+        <span class="project-desc">梦境之旅的旧版本</span>
+      </li>
+      <li>
+        <a href="https://kw972026.github.io/html_trials/mobilettest.html">移动端测试页</a>
+        <span class="project-desc">检测移动端网页可用性</span>
+      </li>
+    </ul>
+  </main>
+
+  <footer>
+    <p>© 2026 kW97_. Built with raw HTML & Canvas.</p>
+  </footer>
+</div>
+
+</body>
+</html>
