@@ -6,8 +6,9 @@
 
 ## 📂 项目目录
 
-### 1. 🏔️ 多场景互动：三重梦境 (Triple Dreams)
-**文件：`JOURNEY_Multimediaversion.html`**
+### 1. 🏔️ 多场景互动：梦境之旅 (Dream Journey|Triple Dreams)
+**文件：`dreamjourney_v2.0.html`**
+**旧版（原三重梦境）：`JOURNEY_Multimediaversion.html`**
 一次关于“视差与转场”的练习，在梦幻的场景中治愈心灵。包含三个意象场景：
 - **月下石洞**：夜空银河与林间小径尽头的倒三角光标。
 - **晚霞海岸**：靠在栏杆边看海的人影剪影。
@@ -43,7 +44,8 @@
 **方法二：在线访问**
 本仓库部分文件开启了 GitHub Pages，你可以直接点击下方链接体验（带有"Multimedia"标识的文件适配了手机端浏览器查看：
 - [月相之旅 (MOONJOURNEY_Multimedia_HB.html)](https://kw972026.github.io/html_trials/MOONJOURNEY_Multimedia_HB.html)
-- [三重梦境 (JOURNEY_Multimediaversion.html)](https://kw972026.github.io/html_trials/JOURNEY_Multimediaversion.html)
+- [梦境之旅 (dreamjourney_v2.0.html)](https://kw972026.github.io/html_trials/dreamjourney_v2.0.html)
+- [三重梦境（梦境之旅前版本） (JOURNEY_Multimediaversion.html)](https://kw972026.github.io/html_trials/JOURNEY_Multimediaversion.html)
 
 
 ## 💡 写在最后
