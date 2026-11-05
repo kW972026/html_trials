@@ -3,138 +3,330 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1.0">
-<title>kW97_</title>
+<title>Welcome 2 my homepage</title>
 <style>
   :root {
-    --bg: #0a0a0c;
-    --text: #e4e4e7;
-    --muted: #71717a;
-    --accent: #a1a1aa;
-    --hover: #f4f4f5;
+    --bg: #05050a;
+    --text: #f4f4f5;
+    --muted: #a1a1aa;
+    --accent: #e4e4e7;
+    /* 卡片变得更透一点，让背景光晕能透出来 */
+    --card-bg: rgba(255, 255, 255, 0.04);
+    --card-border: rgba(255, 255, 255, 0.08);
+    --card-hover: rgba(255, 255, 255, 0.08);
   }
   
   * { box-sizing: border-box; margin: 0; padding: 0; }
   
+  html {
+    scroll-behavior: smooth;
+  }
+
   body {
     background-color: var(--bg);
     color: var(--text);
     font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, "Noto Sans SC", sans-serif;
     line-height: 1.6;
     -webkit-font-smoothing: antialiased;
-    
-    /* 极简居中 */
+    overflow-x: hidden;
+  }
+
+  /* === 核心：背景发光流线体 === */
+  .bg-glow {
+    position: fixed;
+    top: 0; left: 0; width: 100vw; height: 100vh;
+    z-index: -1;
+    overflow: hidden;
+    pointer-events: none;
+  }
+
+  .blob {
+    position: absolute;
+    border-radius: 50%;
+    filter: blur(80px); /* 模糊产生流线光晕感 */
+    opacity: 0.6;
+    animation: moveBlob 20s infinite alternate ease-in-out;
+  }
+
+  /* 蓝色光晕 */
+  .blob-1 {
+    width: 50vw; height: 50vw;
+    background: #f19d2f;
+    top: -10%; left: -10%;
+    animation-duration: 25s;
+  }
+  /* 紫色光晕 */
+  .blob-2 {
+    width: 40vw; height: 40vw;
+    background: #35dbac;
+    top: 30%; right: -10%;
+    animation-duration: 15s;
+    animation-delay: -5s;
+  }
+  /* 青色/青色光晕 */
+  .blob-3 {
+    width: 45vw; height: 45vw;
+    background: #06b6d4;
+    bottom: -20%; left: 20%;
+    animation-duration: 10s;
+    animation-delay: -10s;
+  }
+
+  @keyframes moveBlob {
+    0% { transform: translate(0, 0) scale(1); }
+    50% { transform: translate(10vw, 10vh) scale(1.1); }
+    100% { transform: translate(-5vw, 15vh) scale(0.9); }
+  }
+
+  /* === 内容区 === */
+  .container {
+    max-width: 800px;
+    margin: 0 auto;
+    padding: 0 24px;
+    position: relative;
+    z-index: 1; /* 保证文字在光晕上面 */
+  }
+
+  .hero {
+    min-height: 90vh;
     display: flex;
     flex-direction: column;
     justify-content: center;
-    align-items: center;
-    min-height: 100vh;
-    padding: 2rem;
-  }
-
-  /* 淡淡的进入动画 */
-  .container {
-    max-width: 480px;
-    width: 100%;
     animation: fadeIn 1.2s ease-out;
   }
 
-  @keyframes fadeIn {
-    from { opacity: 0; transform: translateY(10px); }
-    to { opacity: 1; transform: translateY(0); }
-  }
-
   h1 {
-    font-size: 1.5rem;
-    font-weight: 500;
-    letter-spacing: 0.05em;
-    margin-bottom: 0.5rem;
+    font-size: clamp(2.5rem, 6vw, 4rem);
+    font-weight: 700;
+    letter-spacing: -0.03em;
+    margin-bottom: 12px;
+    background: linear-gradient(135deg, #fff, #a1a1aa);
+    background-clip: text;
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
   }
 
   .bio {
     color: var(--muted);
+    font-size: clamp(1rem, 2vw, 1.2rem);
+    margin-bottom: 60px;
+    font-family: monospace;
+    letter-spacing: 0.05em;
+  }
+
+  .main-projects {
+    display: flex;
+    flex-direction: column;
+    gap: 24px;
+  }
+
+  /* === 毛玻璃卡片 === */
+    /* === 基础状态：给卡片打个底，让它有点厚度 === */
+  .card {
+    display: block;
+    text-decoration: none;
+    color: inherit;
+    background: var(--card-bg);
+    border: 1px solid var(--card-border);
+    border-radius: 20px;
+    padding: 32px;
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+    /* 基础状态下给一点点极弱的体积感阴影 */
+    box-shadow: inset 0 1px 0 rgba(255,255,255,0.08), 0 8px 20px rgba(0,0,0,0.4);
+    transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+    position: relative;
+    overflow: hidden;
+  }
+
+  /* === 悬停状态：发光、升空、透光度全开 === */
+  .card:hover {
+    background: var(--card-hover);
+    /* 飞得更高，稍微放大 */
+    transform: translateY(-8px) scale(1.02);
+    /* 边框变亮，强调边缘 */
+    border-color: rgba(255, 255, 255, 0.3);
+    
+    /* 核心：背景模糊更重，且饱和度提升，让底部的流光色彩更鲜艳地透上来 */
+    backdrop-filter: blur(24px) saturate(150%);
+    -webkit-backdrop-filter: blur(24px) saturate(150%);
+    
+    /* 终极发光组合：内发光 + 白色核心高光 + 蓝色外围光晕 */
+    box-shadow: 
+      inset 0 0 20px rgba(255, 255, 255, 0.05),  /* 内部泛起微光 */
+      inset 0 1px 0 rgba(255, 255, 255, 0.4),    /* 顶部切边高光 */
+      0 20px 40px rgba(0, 0, 0, 0.6),            /* 底部深色投影增加立体感 */
+      0 0 30px rgba(255, 255, 255, 0.15),        /* 近处白色光晕 */
+      0 0 60px rgba(100, 200, 255, 0.2);         /* 远处青色光晕（呼应背景的 blob） */
+  }
+
+  /* 增加一条扫光特效：悬停时从左上到右下扫过一道极细的高光 */
+  .card::after {
+    content: '';
+    position: absolute;
+    top: 0; left: -100%; width: 50%; height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(255,255,255,0.1), transparent);
+    transform: skewX(-20deg);
+    transition: none;
+    opacity: 0;
+  }
+
+  .card:hover::after {
+    opacity: 1;
+    animation: shine 0.8s ease-out;
+  }
+
+  @keyframes shine {
+    0% { left: -100%; }
+    100% { left: 200%; }
+  }
+
+  /* 卡片内部的高光切边 */
+  .card::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0; height: 1px;
+    background: linear-gradient(90deg, transparent, rgba(255,255,255,0.5), transparent);
+    opacity: 0;
+    transition: opacity 0.4s;
+  }
+  .card:hover::before { opacity: 1; }
+
+  .card h2 {
+    font-size: 1.5rem;
+    font-weight: 500;
+    margin-bottom: 8px;
+    color: #fff;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .card p {
     font-size: 0.95rem;
-    margin-bottom: 3rem;
+    color: var(--muted);
+  }
+
+  .card.primary {
+    animation: float 6s ease-in-out infinite;
+  }
+  .card.primary:nth-child(2) {
+    animation-delay: -3s;
+  }
+
+  /* === 归档区 === */
+  .archive {
+    padding: 80px 0 100px;
   }
 
   .section-title {
-    font-size: 0.8rem;
+    font-size: 0.85rem;
     color: var(--muted);
     text-transform: uppercase;
-    letter-spacing: 0.1em;
-    margin-bottom: 1rem;
-    border-bottom: 1px solid #27272a;
-    padding-bottom: 0.5rem;
+    letter-spacing: 0.15em;
+    margin-bottom: 24px;
+    border-bottom: 1px solid rgba(255,255,255,0.1);
+    padding-bottom: 12px;
   }
 
-  ul {
-    list-style: none;
+  .archive-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
   }
 
-  li {
-    margin-bottom: 1rem;
+  @media (max-width: 600px) {
+    .archive-grid { grid-template-columns: 1fr; }
+    .blob { filter: blur(60px); opacity: 0.4; } /* 手机端降低模糊和亮度保性能 */
   }
 
-  a {
+  .card.secondary {
+    padding: 24px;
+    background: rgba(0,0,0,0.3);
+    border-color: rgba(255,255,255,0.05);
+  }
+
+  .card.secondary:hover {
+    background: rgba(255,255,255,0.05);
+    border-color: rgba(255,255,255,0.15);
+  }
+
+  .card.secondary h3 {
+    font-size: 1.1rem;
+    font-weight: 400;
+    margin-bottom: 4px;
     color: var(--accent);
-    text-decoration: none;
-    font-size: 0.95rem;
-    transition: color 0.2s ease;
-    display: inline-block;
   }
 
-  a:hover {
-    color: var(--hover);
-  }
-
-  .project-desc {
-    display: block;
-    font-size: 0.8rem;
-    color: #52525b;
-    margin-top: 0.2rem;
+  .card.secondary p {
+    font-size: 0.85rem;
+    color: var(--muted);
   }
 
   footer {
-    margin-top: 4rem;
+    text-align: center;
+    padding-bottom: 40px;
     font-size: 0.75rem;
-    color: #3f3f46;
+    color: var(--muted);
+  }
+
+  @keyframes fadeIn {
+    from { opacity: 0; transform: translateY(20px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  @keyframes float {
+    0% { transform: translateY(0px); }
+    50% { transform: translateY(-6px); }
+    100% { transform: translateY(0px); }
   }
 </style>
 </head>
 <body>
 
+<!-- 背景流线发光体 -->
+<div class="bg-glow">
+  <div class="blob blob-1"></div>
+  <div class="blob blob-2"></div>
+  <div class="blob blob-3"></div>
+</div>
+
 <div class="container">
-  <header>
+  <header class="hero">
     <h1>kW97_</h1>
-    <p class="bio">
-      探索代码、算法与视觉、情绪的交汇处。<br>
-      偶尔用前端写点脑海里的幻想。
-    </p>
+    <p class="bio">a recruit exploring his way...</p>
+
+    <div class="main-projects">
+      <a href="https://kw972026.github.io/html_trials/MOONJOURNEY_Multimedia_HB.html" class="card primary">
+        <h2>月相之旅 <span style="font-size:1rem; opacity:0.5;">↗</span></h2>
+        <p>跟随半个月的月相演进，结合真实天文逻辑的五个沉浸式场景。</p>
+      </a>
+      
+      <a href="https://kw972026.github.io/html_trials/dreamjourney_v2.0.html" class="card primary">
+        <h2>梦境之旅 v2.0 <span style="font-size:1rem; opacity:0.5;">↗</span></h2>
+        <p>全新升级的画面与多场景交互，在晚霞、极光与林间穿梭。</p>
+      </a>
+    </div>
   </header>
 
-  <main>
-    <div class="section-title">Experiments</div>
-    <ul>
-      <li>
-        <a href="https://kw972026.github.io/html_trials/MOONJOURNEY_Multimedia_HB.html">月相之旅</a>
-        <span class="project-desc">从新月到满月的五个预设场景交互</span>
-      </li>
-      <li>
-        <a href="https://kw972026.github.io/html_trials/dreamjourney_v2.0.html">梦境之旅v2.0</a>
-        <span class="project-desc">月下石洞、晚霞海岸与极地雪原的治愈穿梭</span>
-      </li>
-      <li>
-        <a href="https://kw972026.github.io/html_trials/JOURNEY_Multimediaversion.html">三重梦境</a>
-        <span class="project-desc">梦境之旅的旧版本</span>
-      </li>
-      <li>
-        <a href="https://kw972026.github.io/html_trials/mobilettest.html">移动端测试页</a>
-        <span class="project-desc">检测移动端网页可用性</span>
-      </li>
-    </ul>
-  </main>
+  <section class="archive">
+    <h3 class="section-title">Archive / Lab</h3>
+    
+    <div class="archive-grid">
+      <a href="https://kw972026.github.io/html_trials/JOURNEY_Multimediaversion.html" class="card secondary">
+        <h3>三重梦境</h3>
+        <p>最初的石洞、海岸与极光实验。</p>
+      </a>
+
+      <a href="https://kw972026.github.io/html_trials/mobilettest.html" class="card secondary">
+        <h3>移动端测试页</h3>
+        <p>用于 Canvas 响应式与触摸手势的开发角落。</p>
+      </a>
+    </div>
+  </section>
 
   <footer>
-    <p>© 2026 kW97_. Built with raw HTML & Canvas.</p>
+    <p>© 2026 kW97_. Built with raw HTML, CSS & Canvas.</p>
   </footer>
 </div>
 
