@@ -34,9 +34,10 @@
 
 在这个仓库的构建过程中，我经历了无数次与 AI 的“斗智斗勇”，也留下了许多 Debug记忆：
 - **“蹦迪”的天际线**：因为把随机生成的建筑高度写在了渲染循环里，导致浦东的楼群每秒钟都在疯狂上下跳动。
-- **“麻花”操场**：画跑道时左右圆弧的方向参数写反，导致两边的半圆拧成了一个蝴蝶结。
-- **“糖葫芦”东方明珠**：球体半径计算错误，导致两个球挤在一起。
+- **“麻花”操场**：画跑道时左右圆弧的方向参数写反，导致两边的半圆拉着直道拧成了一个蝴蝶结。
+- **“糖葫芦”东方明珠**：球体坐标、半径计算错误，导致两个球挤在一起，好像一串丸子。
 - **天文级月相**：起初几版的蛾眉月都渲染出了上弦月，最终通过 `arc` 和 `ellipse` 遮罩算法，还原了不同时间的月相与暗部透视。
+- **分割线调整**：Pages仓库主页的书写过程中，自学了部分CSS定位和字样设置，试图在已有代码基础上自己加上一条新的分割线，最终借助AI的语法指导完成修改。手搓加元素确实不简单啊
 
 ## 🚀 如何运行
 
@@ -44,7 +45,8 @@
 将本仓库克隆或下载到本地，双击任意 `.html` 文件，用现代浏览器（Chrome / Safari / Edge）打开即可。
 
 **方法二：在线访问**
-本仓库部分文件开启了 GitHub Pages，你可以直接点击下方链接体验（带有"Multimedia"标识的文件适配了手机端浏览器查看：
+本仓库部分文件开启了 GitHub Pages，你可以直接点击下方链接体验（多端可用，推荐在电脑端查看以获得最佳体验）：
+- [仓库主页 (index.html)](https://kw972026.github.io/html_trials)
 - [月相之旅 (MOONJOURNEY_Multimedia_HB.html)](https://kw972026.github.io/html_trials/MOONJOURNEY_Multimedia_HB.html)
 - [梦境之旅 (dreamjourney_v2.0.html)](https://kw972026.github.io/html_trials/dreamjourney_v2.0.html)
 - [三重梦境（梦境之旅前版本） (JOURNEY_Multimediaversion.html)](https://kw972026.github.io/html_trials/JOURNEY_Multimediaversion.html)
